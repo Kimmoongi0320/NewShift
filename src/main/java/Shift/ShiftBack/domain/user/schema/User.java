@@ -13,7 +13,7 @@ import java.util.List;
 @Document(collection = "Users")
 public class User {
     @Id
-    private String id;
+    private Integer ownerId;
     private String name;
     private String email;
     private String age_range;

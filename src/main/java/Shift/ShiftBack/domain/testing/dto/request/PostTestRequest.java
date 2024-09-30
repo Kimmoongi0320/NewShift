@@ -3,6 +3,7 @@ package Shift.ShiftBack.domain.testing.dto.request;
 import java.util.List;
 
 public record PostTestRequest(
+        String session_id,
         String owner_platform,
         Integer owner_id,
         String nickname,
