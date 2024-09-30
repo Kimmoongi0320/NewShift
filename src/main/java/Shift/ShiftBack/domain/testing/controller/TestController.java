@@ -1,42 +1,49 @@
 package Shift.ShiftBack.domain.testing.controller;
 
+import Shift.ShiftBack.domain.login.dto.SessionProperty;
 import Shift.ShiftBack.domain.login.service.LoginService;
 import Shift.ShiftBack.domain.testing.dto.request.PostTestRequest;
 import Shift.ShiftBack.domain.testing.dto.response.TidResponse;
 import Shift.ShiftBack.domain.testing.dto.response.TotalReplyCountResponse;
+import Shift.ShiftBack.domain.testing.repository.TestRepository;
 import Shift.ShiftBack.domain.testing.schema.EpaTest;
+import Shift.ShiftBack.domain.testing.service.TestService;
 import Shift.ShiftBack.domain.user.repository.UserRepository;
 import Shift.ShiftBack.domain.user.schema.User;
+import Shift.ShiftBack.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @RequiredArgsConstructor
 public class TestController {
     private final UserRepository userRepository;
     private final LoginService loginService;
+    private final UserService userService;
+    private final TestRepository testRepository;
+    private final TestService testService;
 
     @PostMapping("/save_epa")
     public ResponseEntity<?> saveEpaTest(@RequestBody PostTestRequest dto) {
-        //todo: 세션에 로그인 되어있는지 확인 절차
         String sessionId = dto.session_id();
-        if (!loginService.verifyLogin(sessionId)) {
+
+        Optional<SessionProperty> sessionProperty = loginService.verifyLogin(sessionId);
+        if (sessionProperty.isEmpty()) {
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("description", "not_logged_in");
             // 401 상태 코드와 함께 JSON 응답 반환
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseBody);
         }
 
-        //todo: 세션의 아이디로 유저정보 DB에 있는지 확인 있으면 User 객체 반환,없으면 새로운 User 객체 생성 후 DB에 저장
-        User user = userRepository.findById(dto.owner_id()).orElse(null);
+        //
+        SessionProperty property = sessionProperty.get();
+
+        User user = userService.createUser(property);
+
         EpaTest epaTest = EpaTest.builder()
                     .owner_platform(dto.owner_platform())
                     .owner_id(dto.owner_id())
@@ -49,8 +56,7 @@ public class TestController {
                     .notification_agree(dto.notification_agree())
                 .build();
 
-        //todo: DB에 epatest 저장 
-        String tid = "test"; // 저장소 저장 후 tid 반환
+        String tid = testService.saveEpaTest(epaTest,user); // 저장소 저장 후 tid 반환
 
         TidResponse tidResponse = TidResponse.builder()
                 .tid(tid)

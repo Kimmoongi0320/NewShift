@@ -15,9 +15,10 @@ public class User {
     @Id
     private Integer ownerId;
     private String name;
+    private String login_type;
     private String email;
     private String age_range;
     private String gender;
     private String phone_number;
-    private List<EpaTest> tests;
+    private List<String> tests;
 }
